@@ -1,5 +1,5 @@
 The project is based on the COLMAP framework. Please refer to https://colmap.github.io/ for more information like installation and tutorial.
-The usage of this application is similair to that of COLMAP. Here is one example of command-lines applying PLC on Linux. The main differerences from COLMAP command-lines lay on the 'colmap patch_match_stereo' block where we add options for applying pyramid architecture and local consistency.
+The usage of this application is similair to that of COLMAP. We demonstrate one example of command-lines applying PLC on Linux below. The main differerences from COLMAP command-lines lay on the 'colmap patch_match_stereo' block where we add options for applying pyramid architecture and local consistency.
 
 ----------------------------------------------------------------------------------------------------------------
 LD_LIBRARY_PATH=/opt/Qt5.12.0/5.12.0/gcc_64/lib/
