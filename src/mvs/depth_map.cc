@@ -72,6 +72,19 @@ void DepthMap::Rescale(const float factor) {
   data_.shrink_to_fit();
 }
 
+void DepthMap::Rescale(int new_width, int new_height) {
+	std::vector<float> new_data(new_width * new_height);
+	DownsampleImage(data_.data(), height_, width_, new_height, new_width,
+		new_data.data());
+
+	data_ = new_data;
+	width_ = new_width;
+	height_ = new_height;
+
+	data_.shrink_to_fit();
+}
+
+
 void DepthMap::Downsize(const size_t max_width, const size_t max_height) {
   if (height_ <= max_height && width_ <= max_width) {
     return;
@@ -79,6 +92,52 @@ void DepthMap::Downsize(const size_t max_width, const size_t max_height) {
   const float factor_x = static_cast<float>(max_width) / width_;
   const float factor_y = static_cast<float>(max_height) / height_;
   Rescale(std::min(factor_x, factor_y));
+}
+
+void DepthMap::UpscaleWithNor(const float factor, const NormalMap& normal_map,
+                              const Image& image) {
+  if (width_ * height_ == 0) {
+    return;
+  }
+  const size_t new_width = std::round(width_ * factor);
+  const size_t new_height = std::round(height_ * factor);
+  std::vector<float> new_data(new_width * new_height);
+
+  const float* k = image.GetK();
+  float fx = *(k + 0) / 2;
+  float fy = *(k + 4) / 2;
+  float cx = *(k + 2) / 2;
+  float cy = *(k + 5) / 2;
+  for (int x = 0; x < width_; ++x) {
+    for (int y = 0; y < height_; ++y) {
+      //获取平面参数
+      float curdepth = data_[y * width_ + x];
+      float X = (x - cx) * curdepth / fx;
+      float Y = (y - cy) * curdepth / fy;
+      float Z = curdepth;
+      float normal[3];
+      normal_map.GetSlice(y, x, normal);
+      float dist = X * normal[0] + Y * normal[1] + Z * normal[2];
+
+      //计算插值点
+      for (int yy = 0; yy < factor; ++yy) {
+        for (int xx = 0; xx < factor; ++xx) {
+          float curx = xx / factor + 0.5 / factor - 0.5 + x;
+          float cury = yy / factor + 0.5 / factor - 0.5 + y;
+          float curdepth = dist / (curx * normal[0] / fx +
+                                   cury * normal[1] / fy + normal[2]);
+          int new_x = x * factor + xx;
+          int new_y = y * factor + yy;
+          new_data.data()[new_y * new_width + new_x] = curdepth;
+
+        }
+      }
+    }
+  }
+  data_ = new_data;
+  width_ = new_width;
+  height_ = new_height;
+  data_.shrink_to_fit();
 }
 
 Bitmap DepthMap::ToBitmap(const float min_percentile,

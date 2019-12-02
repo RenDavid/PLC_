@@ -38,7 +38,7 @@
 #include <Eigen/Core>
 
 #include "mvs/depth_map.h"
-#include "mvs/image.h"
+#include "mvs/eimage.h"
 #include "mvs/mat.h"
 #include "mvs/model.h"
 #include "mvs/normal_map.h"

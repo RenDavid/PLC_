@@ -75,11 +75,13 @@ Workspace::Workspace(const Options& options)
       JoinPaths(options_.workspace_path, options_.stereo_folder, "depth_maps"));
   normal_map_path_ = EnsureTrailingSlash(JoinPaths(
       options_.workspace_path, options_.stereo_folder, "normal_maps"));
+  cost_map_path_ = EnsureTrailingSlash(JoinPaths(
+      options_.workspace_path, options_.stereo_folder, "cost_maps"));
 }
 
 void Workspace::ClearCache() { cache_.Clear(); }
 
-const Workspace::Options& Workspace::GetOptions() const { return options_; }
+Workspace::Options& Workspace::GetOptions() { return options_; }
 
 const Model& Workspace::GetModel() const { return model_; }
 
@@ -113,6 +115,26 @@ const DepthMap& Workspace::GetDepthMap(const int image_idx) {
   return *cached_image.depth_map;
 }
 
+DepthMap Workspace::GetLevelDepthMap(const int level,const int image_idx) {
+  //auto& cached_image = cache_.GetMutable(image_idx);
+  //if (!cached_image.depth_map) {
+  //  cached_image.depth_map.reset(new DepthMap());
+  //  cached_image.depth_map->Read(GetDepthMapPath(image_idx));
+  //  if (options_.max_image_size > 0) {
+  //    cached_image.depth_map->Downsize(model_.images.at(image_idx).GetWidth(),
+  //                                     model_.images.at(image_idx).GetHeight());
+  //  }
+  //  cached_image.num_bytes += cached_image.depth_map->GetNumBytes();
+  //  cache_.UpdateNumBytes(image_idx);
+  //}
+  //return *cached_image.depth_map;
+
+  DepthMap depthmap;
+  depthmap.Read(GetLevelDepthMapPath(level, image_idx));
+  return depthmap;
+}
+
+
 const NormalMap& Workspace::GetNormalMap(const int image_idx) {
   auto& cached_image = cache_.GetMutable(image_idx);
   if (!cached_image.normal_map) {
@@ -129,6 +151,34 @@ const NormalMap& Workspace::GetNormalMap(const int image_idx) {
   return *cached_image.normal_map;
 }
 
+NormalMap Workspace::GetLevelNormalMap(const int level,const int image_idx) {
+  //auto& cached_image = cache_.GetMutable(image_idx);
+  //if (!cached_image.normal_map) {
+  //  cached_image.normal_map.reset(new NormalMap());
+  //  cached_image.normal_map->Read(GetNormalMapPath(image_idx));
+  //  if (options_.max_image_size > 0) {
+  //    cached_image.normal_map->Downsize(
+  //        model_.images.at(image_idx).GetWidth(),
+  //        model_.images.at(image_idx).GetHeight());
+  //  }
+  //  cached_image.num_bytes += cached_image.normal_map->GetNumBytes();
+  //  cache_.UpdateNumBytes(image_idx);
+  //}
+  //return *cached_image.normal_map;
+
+  NormalMap normalmap;
+  normalmap.Read(GetLevelNormalMapPath(level, image_idx));
+  return normalmap;
+}
+
+CostMap Workspace::GetLevelCostMap(const int level, const int image_idx) {
+  CostMap costmap;
+  costmap.Read(GetLevelCostMapPath(level, image_idx));
+  return costmap;
+}
+
+
+
 std::string Workspace::GetBitmapPath(const int image_idx) const {
   return model_.images.at(image_idx).GetPath();
 }
@@ -137,9 +187,21 @@ std::string Workspace::GetDepthMapPath(const int image_idx) const {
   return depth_map_path_ + GetFileName(image_idx);
 }
 
+std::string Workspace::GetLevelDepthMapPath(const int level, const int image_idx) const {
+  return depth_map_path_ + GetLevelFileName(level,image_idx);
+}
 std::string Workspace::GetNormalMapPath(const int image_idx) const {
   return normal_map_path_ + GetFileName(image_idx);
 }
+std::string Workspace::GetLevelNormalMapPath(const int level,const int image_idx) const {
+  return normal_map_path_ + GetLevelFileName(level,image_idx);
+}
+std::string Workspace::GetLevelCostMapPath(const int level,
+                                             const int image_idx) const {
+  return cost_map_path_ + GetLevelFileName(level, image_idx);
+}
+
+
 
 bool Workspace::HasBitmap(const int image_idx) const {
   return ExistsFile(GetBitmapPath(image_idx));
@@ -159,10 +221,20 @@ std::string Workspace::GetFileName(const int image_idx) const {
                       options_.input_type.c_str());
 }
 
-void ImportPMVSWorkspace(const Workspace& workspace,
+std::string Workspace::GetLevelFileName(const int level,const int image_idx) const {
+  const auto& image_name = model_.GetImageName(image_idx);
+  if (level > 0) {
+    return StringPrintf("%s.%s.%d.bin", image_name.c_str(),
+                        options_.input_type.c_str(), level);
+  } else {
+    return StringPrintf("%s.%s.bin", image_name.c_str(),
+                        options_.input_type.c_str());
+  }
+}
+void ImportPMVSWorkspace(Workspace& workspace,
                          const std::string& option_name) {
-  const std::string& workspace_path = workspace.GetOptions().workspace_path;
-  const std::string& stereo_folder = workspace.GetOptions().stereo_folder;
+  std::string& workspace_path = workspace.GetOptions().workspace_path;
+  std::string& stereo_folder = workspace.GetOptions().stereo_folder;
 
   CreateDirIfNotExists(JoinPaths(workspace_path, stereo_folder));
   CreateDirIfNotExists(JoinPaths(workspace_path, stereo_folder, "depth_maps"));

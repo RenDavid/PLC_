@@ -70,6 +70,7 @@ class Mat {
   void Read(const std::string& path);
   void Write(const std::string& path) const;
 
+
  protected:
   size_t width_ = 0;
   size_t height_ = 0;
@@ -189,6 +190,8 @@ void Mat<T>::Write(const std::string& path) const {
   WriteBinaryLittleEndian<T>(&binary_file, data_);
   binary_file.close();
 }
+
+//仅仅适用于mat类型为float！！！
 
 }  // namespace mvs
 }  // namespace colmap

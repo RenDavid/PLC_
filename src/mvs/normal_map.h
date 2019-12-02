@@ -49,10 +49,28 @@ class NormalMap : public Mat<float> {
   explicit NormalMap(const Mat<float>& mat);
 
   void Rescale(const float factor);
+  void Rescale(int new_width, int new_height);
   void Downsize(const size_t max_width, const size_t max_height);
 
   Bitmap ToBitmap() const;
+  friend class DepthMap;
+
+  void Normalize();
 };
+
+class CostMap : public Mat<float> {
+ public:
+  CostMap();
+  CostMap(const size_t width, const size_t height, const size_t n);
+  explicit CostMap(const Mat<float>& mat);
+  void Rescale(const float factor);
+  void Rescale(int new_width, int new_height);
+  void Downsize(const size_t max_width, const size_t max_height);
+
+  friend class DepthMap;
+};
+
+
 
 }  // namespace mvs
 }  // namespace colmap

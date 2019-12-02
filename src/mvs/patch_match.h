@@ -35,9 +35,9 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-
+#include "mvs/cost_map.h"
 #include "mvs/depth_map.h"
-#include "mvs/image.h"
+#include "mvs/eimage.h"
 #include "mvs/model.h"
 #include "mvs/normal_map.h"
 #ifndef __CUDACC__
@@ -137,6 +137,15 @@ struct PatchMatchOptions {
   // Whether to write the consistency graph.
   bool write_consistency_graph = false;
 
+  // level of pyramid stereo matching
+  int pyramid_stereo_match = 0;
+  int pyramid_stereo_match_l = 0;
+
+  // smoothness coefficient
+  double smoothness = 0.8f;
+
+  
+
   void Print() const;
   bool Check() const {
     if (depth_min != -1.0f || depth_max != -1.0f) {
@@ -189,10 +198,14 @@ class PatchMatch {
     // Input normal maps for the geometric consistency term.
     std::vector<NormalMap>* normal_maps = nullptr;
 
+    // Input normal maps for the geometric consistency term.
+    std::vector<CostMap>* cost_maps = nullptr;
+
     // Print the configuration to stdout.
     void Print() const;
   };
 
+  //´«µÝoptionºÍproblem
   PatchMatch(const PatchMatchOptions& options, const Problem& problem);
   ~PatchMatch();
 
@@ -205,6 +218,7 @@ class PatchMatch {
   // Get the computed values after running the algorithm.
   DepthMap GetDepthMap() const;
   NormalMap GetNormalMap() const;
+  CostMap GetCostMap() const;
   ConsistencyGraph GetConsistencyGraph() const;
   Mat<float> GetSelProbMap() const;
 
@@ -259,6 +273,8 @@ class PatchMatchController : public Thread {
   void ReadGpuIndices();
   void ProcessProblem(const PatchMatchOptions& options,
                       const size_t problem_idx);
+  void ProcessProblemL(const int level, const PatchMatchOptions& options,
+                       const size_t problem_idx);
 
   const PatchMatchOptions options_;
   const std::string workspace_path_;
@@ -271,6 +287,7 @@ class PatchMatchController : public Thread {
   std::vector<PatchMatch::Problem> problems_;
   std::vector<int> gpu_indices_;
   std::vector<std::pair<float, float>> depth_ranges_;
+  //std::unique_ptr<ToneUnifier> tone_unifier_;
 };
 
 #endif

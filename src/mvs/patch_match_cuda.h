@@ -38,12 +38,13 @@
 
 #include <cuda_runtime.h>
 
+#include "mvs/cost_map.h"
 #include "mvs/cuda_array_wrapper.h"
 #include "mvs/depth_map.h"
 #include "mvs/gpu_mat.h"
 #include "mvs/gpu_mat_prng.h"
 #include "mvs/gpu_mat_ref_image.h"
-#include "mvs/image.h"
+#include "mvs/eimage.h"
 #include "mvs/normal_map.h"
 #include "mvs/patch_match.h"
 
@@ -60,8 +61,10 @@ class PatchMatchCuda {
 
   DepthMap GetDepthMap() const;
   NormalMap GetNormalMap() const;
+  CostMap GetCostMap() const;
   Mat<float> GetSelProbMap() const;
   std::vector<int> GetConsistentImageIdxs() const;
+
 
  private:
   template <int kWindowSize, int kWindowStep>
@@ -70,6 +73,9 @@ class PatchMatchCuda {
   void ComputeCudaConfig();
 
   void InitRefImage();
+
+  //初始化source image以及depth image（geo_consistency
+  //，src_depth_maps_device_）
   void InitSourceImages();
   void InitTransforms();
   void InitWorkspaceMemory();
@@ -133,6 +139,8 @@ class PatchMatchCuda {
   // Shared memory is too small to hold local state for each thread,
   // so this is workspace memory in global memory.
   std::unique_ptr<GpuMat<float>> global_workspace_;
+
+  // ssim c1 and c2
 };
 
 }  // namespace mvs
