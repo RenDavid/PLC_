@@ -42,17 +42,16 @@
 #include "mvs/fusion.h"
 #include "mvs/meshing.h"
 #include "mvs/patch_match.h"
-#include "optim/bundle_adjustment.h"
+#include "optim/ebundle_adjustment.h"
 #include "ui/render_options.h"
 #include "util/misc.h"
-#include "util/random.h"
 #include "util/version.h"
 
 namespace config = boost::program_options;
 
 namespace colmap {
 
-OptionManager::OptionManager(bool add_project_options) {
+OptionManager::OptionManager() {
   project_path.reset(new std::string());
   database_path.reset(new std::string());
   image_path.reset(new std::string());
@@ -76,12 +75,7 @@ OptionManager::OptionManager(bool add_project_options) {
   Reset();
 
   desc_->add_options()("help,h", "");
-
-  AddAndRegisterDefaultOption("random_seed", &kDefaultPRNGSeed);
-
-  if (add_project_options) {
-    desc_->add_options()("project_path", config::value<std::string>());
-  }
+  desc_->add_options()("project_path", config::value<std::string>());
 }
 
 void OptionManager::ModifyForIndividualData() {
@@ -118,7 +112,7 @@ void OptionManager::ModifyForLowQuality() {
   patch_match_stereo->max_image_size = 1000;
   patch_match_stereo->window_radius = 4;
   patch_match_stereo->window_step = 2;
-  patch_match_stereo->num_samples /= 2;
+  patch_match_stereo->num_samples = 2;
   patch_match_stereo->num_iterations = 3;
   patch_match_stereo->geom_consistency = false;
   stereo_fusion->check_num_images /= 2;
@@ -474,9 +468,6 @@ void OptionManager::AddMapperOptions() {
                               &mapper->ba_refine_principal_point);
   AddAndRegisterDefaultOption("Mapper.ba_refine_extra_params",
                               &mapper->ba_refine_extra_params);
-  AddAndRegisterDefaultOption(
-      "Mapper.ba_min_num_residuals_for_multi_threading",
-      &mapper->ba_min_num_residuals_for_multi_threading);
   AddAndRegisterDefaultOption("Mapper.ba_local_num_images",
                               &mapper->ba_local_num_images);
   AddAndRegisterDefaultOption("Mapper.ba_local_max_num_iterations",
@@ -506,8 +497,6 @@ void OptionManager::AddMapperOptions() {
   AddAndRegisterDefaultOption("Mapper.snapshot_path", &mapper->snapshot_path);
   AddAndRegisterDefaultOption("Mapper.snapshot_images_freq",
                               &mapper->snapshot_images_freq);
-  AddAndRegisterDefaultOption("Mapper.fix_existing_images",
-                              &mapper->fix_existing_images);
 
   // IncrementalMapper.
   AddAndRegisterDefaultOption("Mapper.init_min_num_inliers",
@@ -613,6 +602,14 @@ void OptionManager::AddPatchMatchStereoOptions() {
                               &patch_match_stereo->cache_size);
   AddAndRegisterDefaultOption("PatchMatchStereo.write_consistency_graph",
                               &patch_match_stereo->write_consistency_graph);
+  AddAndRegisterDefaultOption("PatchMatchStereo.pyramid_stereo_match",
+                              &patch_match_stereo->pyramid_stereo_match);
+  AddAndRegisterDefaultOption("PatchMatchStereo.pyramid_stereo_match_l",
+	  &patch_match_stereo->pyramid_stereo_match_l);
+  AddAndRegisterDefaultOption("PatchMatchStereo.smoothness",
+	  &patch_match_stereo->smoothness);
+
+
 }
 
 void OptionManager::AddStereoFusionOptions() {
