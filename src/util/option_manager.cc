@@ -42,7 +42,7 @@
 #include "mvs/fusion.h"
 #include "mvs/meshing.h"
 #include "mvs/patch_match.h"
-#include "optim/ebundle_adjustment.h"
+#include "optim/bundle_adjustment.h"
 #include "ui/render_options.h"
 #include "util/misc.h"
 #include "util/version.h"
