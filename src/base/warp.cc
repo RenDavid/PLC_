@@ -37,6 +37,7 @@
 namespace colmap {
 namespace {
 
+//ÏñËØÔ½½ç¼´Îª0
 float GetPixelConstantBorder(const float* data, const int rows, const int cols,
                              const int row, const int col) {
   if (row >= 0 && col >= 0 && row < rows && col < cols) {
@@ -228,27 +229,36 @@ void DownsampleImage(const float* data, const int rows, const int cols,
                      float* downsampled) {
   CHECK_NOTNULL(data);
   CHECK_NOTNULL(downsampled);
-  CHECK_LE(new_rows, rows);
-  CHECK_LE(new_cols, cols);
-  CHECK_GT(rows, 0);
-  CHECK_GT(cols, 0);
+  //CHECK_GT(rows, 0);
+  //CHECK_GT(cols, 0);
   CHECK_GT(new_rows, 0);
   CHECK_GT(new_cols, 0);
 
-  const float scale_c = static_cast<float>(cols) / static_cast<float>(new_cols);
-  const float scale_r = static_cast<float>(rows) / static_cast<float>(new_rows);
+  if (new_rows < rows) {
+    const float scale_c =
+        static_cast<float>(cols) / static_cast<float>(new_cols);
+    const float scale_r =
+        static_cast<float>(rows) / static_cast<float>(new_rows);
 
-  const float kSigmaScale = 0.5f;
-  const float sigma_c = std::max(std::numeric_limits<float>::epsilon(),
-                                 kSigmaScale * (scale_c - 1));
-  const float sigma_r = std::max(std::numeric_limits<float>::epsilon(),
-                                 kSigmaScale * (scale_r - 1));
+    const float kSigmaScale = 0.5f;
+    const float sigma_c = std::max(std::numeric_limits<float>::epsilon(),
+                                   kSigmaScale * (scale_c - 1));
+    const float sigma_r = std::max(std::numeric_limits<float>::epsilon(),
+                                   kSigmaScale * (scale_r - 1));
 
-  std::vector<float> smoothed(rows * cols);
-  SmoothImage(data, rows, cols, sigma_r, sigma_c, smoothed.data());
+    std::vector<float> smoothed(rows * cols);
+    SmoothImage(data, rows, cols, sigma_r, sigma_c, smoothed.data());
+    ResampleImageBilinear(smoothed.data(), rows, cols, new_rows, new_cols,
+                          downsampled);
 
-  ResampleImageBilinear(smoothed.data(), rows, cols, new_rows, new_cols,
-                        downsampled);
+  } 
+  else 
+  {
+    ResampleImageBilinear(data, rows, cols, new_rows, new_cols,
+                          downsampled);
+  }
+
+  
 }
 
 }  // namespace colmap
